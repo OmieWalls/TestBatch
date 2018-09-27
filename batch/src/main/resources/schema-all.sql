@@ -1,7 +1,7 @@
 create table UPC (
 	name_id VARCHAR(40),
 	upc VARCHAR(50),
-	product_description TEXT
+	product_description VARCHAR(255)
 );
 insert into UPC (name_id, upc, product_description) values ('68ac50a0-f2fa-4ef5-a52c-8ed31013e437', '332072872737', 'varius ut blandit non interdum in');
 insert into UPC (name_id, upc, product_description) values ('9e2192bf-ec8d-4582-8ab3-85ac09349e0c', '529417226790', 'eu orci mauris lacinia sapien quis');

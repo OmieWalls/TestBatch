@@ -2,11 +2,9 @@ package com.hd.batch;
 
 import javax.sql.DataSource;
 
-import com.hd.batch.JobCompletionNotificationListener;
 import com.hd.batch.processor.UpcProcessor;
 import com.hd.batch.to.Upc;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -18,13 +16,10 @@ import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilde
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
-import org.springframework.batch.item.file.mapping.DefaultLineMapper;
-import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 @Configuration
 @EnableBatchProcessing
@@ -58,8 +53,8 @@ public class BatchConfiguration {
     @Bean
     public JdbcBatchItemWriter<Upc> writer(DataSource dataSource) {
         return new JdbcBatchItemWriterBuilder<Upc>()
-                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
-                .sql("INSERT INTO upc (name_id, upc, product_description) VALUES (:nameIdd, :upc, :productDescription)")
+                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Upc>())
+                .sql("INSERT INTO upc (name_id, upc, product_description) VALUES (:nameId, :upc, :productDescription)")
                 .dataSource(dataSource)
                 .build();
     }
