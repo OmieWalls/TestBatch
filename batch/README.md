@@ -1,7 +1,7 @@
-SpringBoot HelloWorld for App Engine Standard (Java 8)
+Batch Using App Engine Standard (Java 8)
 ============================
 
-This sample demonstrates how to deploy a Spring Boot application on Google App Engine.
+This sample demonstrates how to deploy a Spring Batch application on Google App Engine.
 
 See the [Google App Engine standard environment documentation][ae-docs] for more
 detailed instructions.

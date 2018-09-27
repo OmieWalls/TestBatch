@@ -5,3 +5,5 @@ appengine-generated/
 .idea/
 *.iml
 
+# MacOS
+.DS_Store
