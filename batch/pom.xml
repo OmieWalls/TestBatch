@@ -201,7 +201,7 @@
         <configuration>
           <groups>com.testwithspring.master.UnitTest</groups>
           <includes>
-            <include>**/*Spec.java</include>
+            <include>**/*Spec.groovy</include>
           </includes>
         </configuration>
       </plugin>
