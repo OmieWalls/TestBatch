@@ -53,7 +53,7 @@ public class BatchConfiguration {
     @Bean
     public JdbcBatchItemWriter<Upc> writer(DataSource dataSource) {
         return new JdbcBatchItemWriterBuilder<Upc>()
-                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Upc>())
+                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
                 .sql("INSERT INTO upc (name_id, upc, product_description) VALUES (:nameId, :upc, :productDescription)")
                 .dataSource(dataSource)
                 .build();
