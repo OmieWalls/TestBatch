@@ -5,7 +5,7 @@ import com.google.appengine.api.datastore.Entity;
 import com.hd.batch.dao.BigQueryDAO;
 import com.hd.batch.dao.DatastoreDAO;
 import com.hd.batch.services.EventServiceInterface;
-import com.hd.batch.to.RFIDEvent;
+import com.hd.batch.to.Event;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -23,47 +23,47 @@ public class EventServiceImpl implements EventServiceInterface {
     @Autowired
     public DatastoreDAO datastoreDAO;
 
-    private static final Logger LOG = Logger.getLogger(RFIDEvent.class.getName());
+    private static final Logger LOG = Logger.getLogger(Event.class.getName());
 
-    public void processEventData(String lcp)  {
+    public void processEventData()  {
         //convert any existing hex tag values to ascii
         //TODO function to convert tags from hex to ascii
-        bigQueryDAO.convertHexToAscii(lcp);
+        bigQueryDAO.updateBigQueryEntityWithHexToASCIIByLCP(lcp);
         //read messages from the subscription
-        TableResult eventList = bigQueryDAO.getEventData(lcp);
+        TableResult eventList = bigQueryDAO.getRFIDEventDataFromLCP(lcp);
         if (eventList != null && eventList.getTotalRows() > 0) {
             for (List<FieldValue> rowDt : eventList.iterateAll()) {
                 if (rowDt.get(0).getValue() != null) {
 
-                    RFIDEvent rfidEvent = null;
+                    Event event = null;
 
                     try {
                         //parse to json
-                        rfidEvent = parseRFIDEvent(rowDt);
+                        event = parseRFIDEvent(rowDt);
 
-                        if(rfidEvent.getUpc() == null){
-                            throw new Exception(String.format("no matching tag data found for tag id: %s  store: %s ", rfidEvent.getTagId(), rfidEvent.getStoreNumber()));
+                        if(event.getUpc() == null){
+                            throw new Exception(String.format("no matching tag data found for tag id: %s  store: %s ", event.getTagId(), event.getStoreNumber()));
                         }
-                        if(rfidEvent.getReceiverId() == null){
-                            throw new Exception(String.format("no matching readers found for tag id: %s  store: %s ", rfidEvent.getTagId(), rfidEvent.getStoreNumber()));
+                        if(event.getReceiverId() == null){
+                            throw new Exception(String.format("no matching readers found for tag id: %s  store: %s ", event.getTagId(), event.getStoreNumber()));
                         }
 
                         //build event entity with enrichments
-                        Entity saveEntity = analyzeEvent(rfidEvent, lcp);
+                        Entity saveEntity = analyzeRFIDEvent(event, lcp);
                         //update event_copy: matched & check_count;
-                        bigQueryDAO.updateEventToBQ(saveEntity, lcp);
+                        bigQueryDAO.updateRFIDEventToBigQueryEntity(saveEntity, lcp);
                         //write event to datastore
-                        datastoreDAO.writeEventToDS(saveEntity);
+                        datastoreDAO.writeEntity(saveEntity);
 
                     } catch (Exception ex) {
                         // create the error row
                         try {
                             ex.printStackTrace();
-                            LOG.severe(String.format("Got exception processing event.  Exception: %s. Event: %s ", ex.getMessage(), rfidEvent));
-                            bigQueryDAO.writeErrorToBQ(ex.getMessage(), rfidEvent, lcp);
+                            LOG.severe(String.format("Got exception processing event.  Exception: %s. Event: %s ", ex.getMessage(), event));
+                            bigQueryDAO.writeRFIDEventErrorToBigQuery(ex.getMessage(), event, lcp);
                         } catch (Exception bqex) {
                             bqex.printStackTrace();
-                            LOG.severe(String.format("Got exception writing to BQ Error table.  Exception: %s. Event: %s ", bqex.getMessage(), rfidEvent));
+                            LOG.severe(String.format("Got exception writing to BQ Error table.  Exception: %s. Event: %s ", bqex.getMessage(), event));
                         }
                     }
                 }
@@ -72,11 +72,11 @@ public class EventServiceImpl implements EventServiceInterface {
     }
 
 
-    private RFIDEvent parseRFIDEvent(List<FieldValue> eventRow) {
+    private Event parseRFIDEvent(List<FieldValue> eventRow) {
         if (eventRow != null) {
             DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss z");
             DateTime eventTime = formatter.parseDateTime(eventRow.get(4).getValue().toString());
-            return new RFIDEvent(
+            return new Event(
                     (eventRow.get(1).getValue() != null ? eventRow.get(1).getValue().toString() : null),
                     (eventRow.get(2).getValue() != null ? eventRow.get(2).getValue().toString(): null),
                     (eventRow.get(12).getValue() != null ? eventRow.get(12).getValue().toString(): null),
@@ -94,7 +94,7 @@ public class EventServiceImpl implements EventServiceInterface {
         return null;
     }
 
-    private Entity analyzeEvent(RFIDEvent event, String lcp) throws Exception {
+    private Entity analyzeRFIDEvent(Event event, String lcp) throws Exception {
 
         String register = null;
 

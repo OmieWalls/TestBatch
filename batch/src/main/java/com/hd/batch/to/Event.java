@@ -7,7 +7,7 @@ import org.joda.time.DateTime;
 /*
 convience class for events sent by RFID readers
  */
-public class RFIDEvent {
+public class Event {
 
     private Util util;
     private String tagId;
@@ -24,8 +24,8 @@ public class RFIDEvent {
     private Boolean matched;
 
 
-    public RFIDEvent(String tagId, String receiverId, String storeNumber, DateTime eventTime, Integer signal, String location,
-                     Boolean exitReader, String upc, String productName, Double currRetailAmt, int checkedCounter, Boolean matched) {
+    public Event(String tagId, String receiverId, String storeNumber, DateTime eventTime, Integer signal, String location,
+                 Boolean exitReader, String upc, String productName, Double currRetailAmt, int checkedCounter, Boolean matched) {
         this.tagId = tagId;
         this.receiverId = receiverId;
         this.storeNumber = storeNumber;

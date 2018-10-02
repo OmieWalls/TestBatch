@@ -3,7 +3,7 @@ package com.hd.batch.dao;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.hd.batch.to.RFIDEvent;
+import com.hd.batch.to.Event;
 import org.springframework.stereotype.Component;
 
 import java.util.logging.Logger;
@@ -11,17 +11,17 @@ import java.util.logging.Logger;
 @Component
 public class DatastoreDAO {
 
-    private static final Logger LOG = Logger.getLogger(RFIDEvent.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Event.class.getName());
 
     /**
-     * write entity event to datastore
+     * write entity entity to datastore
      *
-     * @param event event entity to be written
-     * @throws Exception on error
+     * @param entity entity to be written
      */
-    public void writeEventToDS(Entity event) throws Exception {
-        LOG.info(String.format("Writing event to datastore.  Tagid:   %s ", (String) event.getProperty("tag_id")));
+    public void writeEntity(Entity entity) {
+        LOGGER.info(String.format("Writing entity to datastore.  Entity:   %s ", String.valueOf(entity)));
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        datastore.put(event);
+        //TODO: Check if existing... This might run twice?
+        datastore.put(entity);
     }
 }
