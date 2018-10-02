@@ -1,4 +1,4 @@
-package com.hd.batch.dao;
+package com.hd.batch.util;
 
 import com.google.cloud.bigquery.*;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ public class BigQueryUtilities {
         BigQuery bigquery = BigQueryOptions.getDefaultInstance().getService();//FIXME needs to be a configuration if keeping local capability
 //        BigQuery bigquery =
 //                BigQueryOptions.newBuilder().setCredentials(ServiceAccountCredentials.fromStream(
-//                        new FileInputStream(EventServiceConstants.LOCAL_CREDENTIALS_PATH))).build().getService();
+//                        new FileInputStream(EventServiceQueryConstants.LOCAL_CREDENTIALS_PATH))).build().getService();
 
         QueryJobConfiguration queryConfig =
                 QueryJobConfiguration.newBuilder(queryString)

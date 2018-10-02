@@ -3,7 +3,7 @@ package com.hd.batch.constants;
 import java.util.HashMap;
 import java.util.Map;
 
-public interface EventServiceConstants {
+public interface EventServiceQueryConstants {
 
 
     Map<String, String> BQ_CONVERT_HEX_TO_ASCII_BY_LCP = new HashMap<String, String>() {
