@@ -3,7 +3,6 @@ package com.hd.batch;
 import com.hd.batch.dao.BigQueryDAO;
 import com.hd.batch.dao.DatastoreDAO;
 import com.hd.batch.processor.EventProcessor;
-import com.hd.batch.to.Event;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;

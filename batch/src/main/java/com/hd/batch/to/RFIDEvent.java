@@ -1,6 +1,7 @@
 package com.hd.batch.to;
 
 
+import com.hd.batch.util.Util;
 import org.joda.time.DateTime;
 
 /*
@@ -8,6 +9,7 @@ convience class for events sent by RFID readers
  */
 public class RFIDEvent {
 
+    private Util util;
     private String tagId;
     private String receiverId;
     private String storeNumber;
@@ -142,4 +144,9 @@ public class RFIDEvent {
     public void setMatched(Boolean matched) {
         this.matched = matched;
     }
+
+    public Object serialize(String json) {
+        return util.serialize(json, this.getClass());
+    }
+
 }

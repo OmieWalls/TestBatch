@@ -1,6 +1,6 @@
 package com.hd.batch
 
-import com.hd.batch.to.Event
+
 import spock.lang.Specification
 
 class SalesProcessorSpec extends Specification {

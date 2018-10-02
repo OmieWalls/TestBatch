@@ -1,7 +1,6 @@
 package com.hd.batch.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hd.batch.to.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
