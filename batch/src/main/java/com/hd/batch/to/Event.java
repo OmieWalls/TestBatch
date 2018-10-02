@@ -1,14 +1,12 @@
 package com.hd.batch.to;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.hd.batch.util.Util;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.io.IOException;
 import java.util.Objects;
 
 public class Event {
-    private Logger log = LoggerFactory.getLogger(Event.class);
+    private Util util;
     private String name_id;
     private String curr_ts;
     private String event_status;
@@ -215,13 +213,8 @@ public class Event {
                 '}';
     }
 
-    public Event serialize(String json) {
-        try {
-            return new ObjectMapper().readValue(json, Event.class);
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
-        return null;
+    public Object serialize(String json) {
+        return util.serialize(json, this.getClass());
     }
 
 }

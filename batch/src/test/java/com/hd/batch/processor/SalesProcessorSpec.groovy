@@ -1,7 +1,6 @@
 package com.hd.batch.processor
 
 import com.hd.batch.to.Event
-import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
 @Category(ProcessorSpec.class)
