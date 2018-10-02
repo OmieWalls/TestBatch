@@ -1,9 +1,8 @@
-package com.hd.batch.processor
+package com.hd.batch
 
 import com.hd.batch.to.Event
 import spock.lang.Specification
 
-@Category(ProcessorSpec.class)
 class SalesProcessorSpec extends Specification {
 
     def 'Retrieve sales from a 30-minute window starting 10 minutes before the event'() {
