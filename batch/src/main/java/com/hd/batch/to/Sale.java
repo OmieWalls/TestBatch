@@ -2,7 +2,7 @@ package com.hd.batch.to;
 
 import java.util.Objects;
 
-class Sale {
+public class Sale {
 
     private String storeNumber;
     private String salesTsLocal;

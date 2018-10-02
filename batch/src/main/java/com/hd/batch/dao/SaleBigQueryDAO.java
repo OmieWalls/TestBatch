@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Component
@@ -27,11 +28,11 @@ public class SaleBigQueryDAO extends BigQueryDAO {
         super(bigQueryUtilities);
     }
 
-    public HashMap<String, Object> getMatchingSales(String storeNumber, String startTime,
-                                                    String endTime, String upc) throws Exception {
+    public Map<String, Object> getMatchingSales(String storeNumber, String startTime,
+                                                String endTime, String upc) throws Exception {
 
         LOGGER.info(String.format("Query sales for store: %s start time: %s end time: %s upd: %s", storeNumber, startTime, endTime, upc));
-        HashMap<String, Object> matchedData = new HashMap<String, Object>();
+        HashMap<String, Object> matchedData = new HashMap<>();
 
         String queryString = SaleServiceQueryConstants.SELECT_BQ_SALES.replace("@storeNumber", storeNumber)
                 .replace("@startTime", startTime)
@@ -43,10 +44,10 @@ public class SaleBigQueryDAO extends BigQueryDAO {
         if (result.getTotalRows() > 0) {
             LOGGER.info("Found a sale for tag");
 
-            for (List<FieldValue> rowDt : result.iterateAll()) {
+            for (List<FieldValue> property : result.iterateAll()) {
 
-                if (rowDt.get(0).getValue() != null) {
-                    matchedData.put("register", rowDt.get(8).getValue().toString());
+                if (property.get(0).getValue() != null) {
+                    matchedData.put("register", property.get(8).getValue().toString());
 
                 }
             }
