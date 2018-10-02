@@ -1,28 +1,25 @@
 package com.hd.batch;
 
-import javax.sql.DataSource;
-
-import com.hd.batch.processor.UpcProcessor;
-import com.hd.batch.to.Upc;
+import com.hd.batch.dao.BigQueryDAO;
+import com.hd.batch.dao.DatastoreDAO;
+import com.hd.batch.processor.EventProcessor;
+import com.hd.batch.to.Event;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 
 @Configuration
 @EnableBatchProcessing
+@ComponentScan
 public class BatchConfiguration {
 
     @Autowired
@@ -31,53 +28,62 @@ public class BatchConfiguration {
     @Autowired
     public StepBuilderFactory stepBuilderFactory;
 
+
     // tag::readerwriterprocessor[]
     @Bean
-    public FlatFileItemReader<Upc> reader() {
-        return new FlatFileItemReaderBuilder<Upc>()
-                .name("upcReader")
-                .resource(new ClassPathResource("sample-data.csv"))
-                .delimited()
-                .names(new String[]{"name_id", "upc", "product_description"})
-                .fieldSetMapper(new BeanWrapperFieldSetMapper<Upc>() {{
-                    setTargetType(Upc.class);
-                }})
-                .build();
+    public ItemReader<Event> reader() {
+        //TODO: Return Events from BigQuery
+        return null;
     }
 
     @Bean
-    public UpcProcessor processor() {
-        return new UpcProcessor();
+    public EventProcessor processor() {
+        return new EventProcessor();
     }
 
     @Bean
-    public JdbcBatchItemWriter<Upc> writer(DataSource dataSource) {
-        return new JdbcBatchItemWriterBuilder<Upc>()
-                .itemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<>())
-                .sql("INSERT INTO upc (name_id, upc, product_description) VALUES (:nameId, :upc, :productDescription)")
-                .dataSource(dataSource)
-                .build();
+    public JdbcBatchItemWriter<Event> bigQueryWriter(BigQueryDAO bigQueryWriter) {
+        //TODO: Write upsert to BigQuery and write insert to Datastore
+        return null;
+    }
+
+
+    @Bean
+    public JdbcBatchItemWriter<Event> dataStoreWriter(DatastoreDAO dataStoreWriter) {
+        //TODO: Write upsert to BigQuery and write insert to Datastore
+        return null;
     }
     // end::readerwriterprocessor[]
 
     // tag::jobstep[]
     @Bean
-    public Job importUpcJob(JobCompletionNotificationListener listener, Step step1) {
-        return jobBuilderFactory.get("importUpcJob")
+    public Job importEventJob(JobCompletionNotificationListener listener, Step step1, Step step2) {
+        return jobBuilderFactory.get("importEventJob")
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .flow(step1)
+                .next(step2)
                 .end()
                 .build();
     }
 
     @Bean
-    public Step step1(JdbcBatchItemWriter<Upc> writer) {
+    public Step step1(JdbcBatchItemWriter<Event> bigQueryWriter) {
         return stepBuilderFactory.get("step1")
-                .<Upc, Upc> chunk(10)
+                .<Event, Event> chunk(10)
                 .reader(reader())
                 .processor(processor())
-                .writer(writer)
+                .writer(bigQueryWriter)
+                .build();
+    }
+
+    @Bean
+    public Step step2(JdbcBatchItemWriter<Event> dataStoreWriter) {
+        return stepBuilderFactory.get("step2")
+                .<Event, Event> chunk(10)
+                .reader(reader())
+                .processor(processor())
+                .writer(dataStoreWriter)
                 .build();
     }
     // end::jobstep[]
