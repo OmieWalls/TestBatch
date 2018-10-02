@@ -1,5 +1,6 @@
 package com.hd.batch.processor
 
+import com.hd.batch.to.Event
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 
@@ -11,8 +12,11 @@ class SalesProcessorSpec extends Specification {
         given: 'We create a new list of sales data'
         def sales = []
 
-        when: 'An entry is being validated'
-        list.add('Hello World!')
+        given: 'We create a event data object'
+        def event = new Event();
+
+        when: 'An event is being validated'
+
 
         then: 'The list should provide sales data with transaction timestamps that match the window'
         list hasSize(1)

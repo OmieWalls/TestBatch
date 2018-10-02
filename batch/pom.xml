@@ -15,10 +15,77 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <spring.boot.version>2.0.2.RELEASE</spring.boot.version> <!-- DO NOT UPDATE w/o MANUAL TESTING -->
+
     <java.version>1.8</java.version>
+    <jdk.version>1.8</jdk.version>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <failsafe.junit.category>com.testwithspring.master.IntegrationTest</failsafe.junit.category>
+    <skip.unit.tests>false</skip.unit.tests>
+    <skip.failsafe.plugin>true</skip.failsafe.plugin>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
   </properties>
+
+  <profiles>
+    <profile>
+      <id>dev</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+    </profile>
+    <profile>
+      <id>end-to-end-test</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-maven-plugin</artifactId>
+            <version>9.4.6.v20170531</version>
+            <configuration>
+              <scanIntervalSeconds>0</scanIntervalSeconds>
+              <stopKey>stop</stopKey>
+              <stopPort>9999</stopPort>
+              <webAppConfig>
+                <war>${project.basedir}/target/running-end-to-end-tests.war</war>
+                <contextPath>/</contextPath>
+              </webAppConfig>
+            </configuration>
+            <executions>
+              <execution>
+                <id>start-jetty</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>start</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>stop-jetty</id>
+                <phase>post-integration-test</phase>
+                <goals>
+                  <goal>stop</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <properties>
+        <failsafe.junit.category>com.testwithspring.master.EndToEndTest</failsafe.junit.category>
+        <skip.failsafe.plugin>false</skip.failsafe.plugin>
+        <skip.unit.tests>true</skip.unit.tests>
+      </properties>
+    </profile>
+    <profile>
+      <id>integration-test</id>
+      <properties>
+        <skip.failsafe.plugin>false</skip.failsafe.plugin>
+        <skip.unit.tests>true</skip.unit.tests>
+      </properties>
+    </profile>
+  </profiles>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
@@ -94,6 +161,12 @@
       <version>1.1-groovy-2.4</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.9.4</version>
+    </dependency>
   </dependencies>
 
   <dependencyManagement>
@@ -148,31 +221,70 @@
       </plugin>
       <!-- [END cloudplugin] -->
 
-       <plugin>
+      <plugin>
         <groupId>org.codehaus.mojo</groupId>
-        <artifactId>versions-maven-plugin</artifactId>
-        <version>2.4</version>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.12</version>
         <executions>
           <execution>
-            <phase>compile</phase>
+            <id>add-integration-test-resources</id>
+            <phase>generate-test-resources</phase>
             <goals>
-              <goal>display-dependency-updates</goal>
-              <goal>display-plugin-updates</goal>
+              <goal>add-test-resource</goal>
             </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <filtering>true</filtering>
+                  <directory>src/integration-test/resources</directory>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
+            <id>add-end-to-end-test-resources</id>
+            <phase>generate-test-resources</phase>
+            <goals>
+              <goal>add-test-resource</goal>
+            </goals>
+            <configuration>
+              <resources>
+                <resource>
+                  <filtering>true</filtering>
+                  <directory>src/end-to-end-test/resources</directory>
+                </resource>
+              </resources>
+            </configuration>
           </execution>
         </executions>
-        <configuration>
-          <excludes>
-            <exclude>javax.servlet:javax.servlet-api</exclude>
-            <exclude>com.google.guava:guava</exclude> <!-- avoid android version -->
-          </excludes>
-        </configuration>
       </plugin>
       <!-- Spock Testing -->
       <plugin>
         <groupId>org.codehaus.gmavenplus</groupId>
         <artifactId>gmavenplus-plugin</artifactId>
         <version>1.5</version>
+        <configuration>
+          <testSources>
+            <testSource>
+              <directory>src/test/groovy</directory>
+              <includes>
+                <include>**/*.groovy</include>
+              </includes>
+            </testSource>
+            <testSource>
+              <directory>src/integration-test/groovy</directory>
+              <includes>
+                <include>**/*.groovy</include>
+              </includes>
+            </testSource>
+            <testSource>
+              <directory>src/end-to-end-test/groovy</directory>
+              <includes>
+                <include>**/*.groovy</include>
+              </includes>
+            </testSource>
+          </testSources>
+        </configuration>
         <executions>
           <execution>
             <goals>
@@ -204,6 +316,28 @@
             <include>**/*Spec.groovy</include>
           </includes>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.20.1</version>
+        <executions>
+          <execution>
+            <id>integration-tests</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <groups>${failsafe.junit.category}</groups>
+              <includes>
+                <include>**/*Spec.java</include>
+              </includes>
+              <skipTests>${skip.failsafe.plugin}</skipTests>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <!--War Plugin-->
