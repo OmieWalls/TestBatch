@@ -8,15 +8,12 @@ import com.hd.batch.util.BigQueryUtilities;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.ISODateTimeFormat;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 
 @Component
 public class EventBigQueryDAO extends BigQueryDAO {
 
-    @Autowired
-    BigQueryUtilities bigQueryUtilities;
 
     public EventBigQueryDAO(BigQueryUtilities bigQueryUtilities) {
         super(bigQueryUtilities);

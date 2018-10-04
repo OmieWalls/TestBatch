@@ -1,12 +1,9 @@
 package com.hd.batch.constants;
 
+import static com.hd.batch.constants.QueryConstants.*;
+
 public interface EventServiceQueryConstants {
 
-    String BIG_QUERY_RFID_DATABASE = "rfid-data-display";
-    String BIG_QUERY_RFID_EVENT_KIND = BIG_QUERY_RFID_DATABASE + ".rfid_table.event_copy";
-    String BIG_QUERY_RFID_TAG_KIND = BIG_QUERY_RFID_DATABASE + ".rfid_table.tag";
-    String BIG_QUERY_RFID_READER_KIND = BIG_QUERY_RFID_DATABASE + ".rfid_table.reader";
-    String BIG_QUERY_RFID_ERROR_KIND = BIG_QUERY_RFID_DATABASE + ".rfid_table.error";
 
     String UPDATE_BQ_CONVERT_HEX_TO_ASCII = "UPDATE `"+ BIG_QUERY_RFID_EVENT_KIND + "` event_copy " +
             "SET ascii_tag_id = " +
@@ -40,5 +37,4 @@ public interface EventServiceQueryConstants {
     String INSERT_BQ_RFID_ERROR = "INSERT INTO `" + BIG_QUERY_RFID_ERROR_KIND + "` "
             + "(CURR_TS, ERROR, EVENT_DATA) "
             + "VALUES ('@currTime', '@error', '@event')";
-
 }
