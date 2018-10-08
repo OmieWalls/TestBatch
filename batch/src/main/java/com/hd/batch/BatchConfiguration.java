@@ -1,20 +1,23 @@
 package com.hd.batch;
 
-import com.hd.batch.dao.BigQueryDAO;
-import com.hd.batch.dao.DatastoreDAO;
-import com.hd.batch.processor.EventProcessor;
+import com.google.appengine.api.datastore.Entity;
+import com.hd.batch.to.Event;
+import com.hd.batch.to.Sale;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
+import org.springframework.batch.item.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Configuration
 @EnableBatchProcessing
@@ -22,68 +25,68 @@ import org.springframework.context.annotation.Configuration;
 public class BatchConfiguration {
 
     @Autowired
-    public JobBuilderFactory jobBuilderFactory;
+    public JobBuilderFactory job;
 
     @Autowired
-    public StepBuilderFactory stepBuilderFactory;
+    public StepBuilderFactory steps;
 
+    List<Event> events = new ArrayList<>();
 
-    // tag::readerwriterprocessor[]
-    @Bean
-    public ItemReader<Event> reader() {
-        //TODO: Return Events from BigQuery
+    List<Sale> sales = new ArrayList<>();
+
+    public ItemReader<Event> eventReader() { return null; }
+
+    public ItemWriter<Event> eventWriter(List events) {
+        return null;
+    }
+
+    public ItemReader<Event> saleReader(List events) { return null; }
+
+    public ItemWriter<Sale> saleWriter(List sales) {
+        return null;
+    }
+
+    public ItemProcessor<Map<String, Object>, Entity> matchProcessor(List events, List sales) { return null; }
+
+    public ItemWriter<Entity> matchWriter() {
         return null;
     }
 
     @Bean
-    public EventProcessor processor() {
-        return new EventProcessor();
-    }
-
-    @Bean
-    public JdbcBatchItemWriter<Event> bigQueryWriter(BigQueryDAO bigQueryWriter) {
-        //TODO: Write upsert to BigQuery and write insert to Datastore
-        return null;
-    }
-
-
-    @Bean
-    public JdbcBatchItemWriter<Event> dataStoreWriter(DatastoreDAO dataStoreWriter) {
-        //TODO: Write upsert to BigQuery and write insert to Datastore
-        return null;
-    }
-    // end::readerwriterprocessor[]
-
-    // tag::jobstep[]
-    @Bean
-    public Job importEventJob(JobCompletionNotificationListener listener, Step step1, Step step2) {
-        return jobBuilderFactory.get("importEventJob")
-                .incrementer(new RunIdIncrementer())
-                .listener(listener)
-                .flow(step1)
-                .next(step2)
-                .end()
+    public Job eventJob() {
+        return this.job.get("eventJob")
+                .start(eventLoad())
+                .next(saleLoad())
+                .next(match())
                 .build();
     }
 
     @Bean
-    public Step step1(JdbcBatchItemWriter<Event> bigQueryWriter) {
-        return stepBuilderFactory.get("step1")
-                .<Event, Event> chunk(10)
-                .reader(reader())
-                .processor(processor())
-                .writer(bigQueryWriter)
+    public Step eventLoad() {
+        return this.steps.get("eventLoad")
+                .<Event, Event>chunk(10)
+                .reader(eventReader())
+                .writer(eventWriter(events))
                 .build();
     }
 
     @Bean
-    public Step step2(JdbcBatchItemWriter<Event> dataStoreWriter) {
-        return stepBuilderFactory.get("step2")
-                .<Event, Event> chunk(10)
-                .reader(reader())
-                .processor(processor())
-                .writer(dataStoreWriter)
+    public Step saleLoad() {
+        return this.steps.get("saleMatch")
+                .allowStartIfComplete(true)
+                .<Event, Sale>chunk(10)
+                .reader(saleReader(events))
+                .writer(saleWriter(sales))
                 .build();
     }
-    // end::jobstep[]
+
+    @Bean
+    public Step match() {
+        return this.steps.get("match")
+                .startLimit(3)
+                .<Map<String, Object>, Entity>chunk(10)
+                .processor(matchProcessor(events, sales))
+                .writer(matchWriter())
+                .build();
+    }
 }
