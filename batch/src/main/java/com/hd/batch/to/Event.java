@@ -1,32 +1,29 @@
 package com.hd.batch.to;
 
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.appengine.api.NamespaceManager;
 import com.google.appengine.api.datastore.Entity;
-import com.hd.batch.util.LoggerClass;
-import com.hd.batch.util.Util;
+import com.google.cloud.bigquery.FieldValue;
 import org.joda.time.DateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
+import javax.naming.Name;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
+
+import static com.hd.batch.constants.QueryConstants.DATASTORE_EVENT_KIND;
+import static com.hd.batch.constants.QueryConstants.DATASTORE_NAMESPACE;
 
 /**
  * Convenience class for RFID readers
  */
 public class Event {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoggerClass.class);
-
-    private Util util;
     private String tagId;
     private String receiverId;
     private String storeNumber;
     private DateTime eventTime;
-    private Integer signal;
     private String location;
     private Boolean exitReader;
     private String upc;
@@ -36,14 +33,13 @@ public class Event {
     private Boolean matched;
     private String register;
 
-    public Event(String tagId, String receiverId, String storeNumber, DateTime eventTime, Integer signal, String location,
+    public Event(String tagId, String receiverId, String storeNumber, DateTime eventTime, String location,
                  Boolean exitReader, String upc, String productName, Double currRetailAmt, int checkedCounter, Boolean matched,
                  String register) {
         this.tagId = tagId;
         this.receiverId = receiverId;
         this.storeNumber = storeNumber;
         this.eventTime = eventTime;
-        this.signal = signal;
         this.location = location;
         this.exitReader = exitReader;
         this.upc = upc;
@@ -54,12 +50,54 @@ public class Event {
         this.register = register;
     }
 
-    public Integer getSignal() {
-        return signal;
-    }
+    /**
+     * Maps event from BigQuery TableResult. Each row is a list containing each FieldValue for an entity.
+     *
+     * @param tableResultRow
+     */
+    public Event(List<FieldValue> tableResultRow) {
 
-    public void setSignal(Integer signal) {
-        this.signal = signal;
+        if (tableResultRow != null) {
+            if (!tableResultRow.isEmpty()) {
+
+                DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss z");
+
+                this.tagId = tableResultRow.get(1).getValue() != null ?
+                        tableResultRow.get(1).getValue().toString() : null;
+
+                this.receiverId = tableResultRow.get(2).getValue() != null ?
+                        tableResultRow.get(2).getValue().toString() : null;
+
+                this.storeNumber = tableResultRow.get(12).getValue() != null ?
+                        tableResultRow.get(12).getValue().toString() : null;
+
+                this.eventTime = tableResultRow.get(4).getValue() != null ?
+                        formatter.parseDateTime(tableResultRow.get(4).getValue().toString()) : null;
+
+                this.location = tableResultRow.get(7).getValue() != null ?
+                        tableResultRow.get(7).getValue().toString() : null;
+
+                this.exitReader = tableResultRow.get(8).getValue() != null ?
+                        Boolean.parseBoolean(tableResultRow.get(8).getValue().toString()) : null;
+
+                this.upc = tableResultRow.get(3).getValue() != null ?
+                        tableResultRow.get(3).getValue().toString() : null;
+
+                this.productName = tableResultRow.get(11).getValue() != null ?
+                        tableResultRow.get(11).getValue().toString() : null;
+
+                this.currRetailAmt = tableResultRow.get(6).getValue() != null ?
+                        Double.parseDouble(tableResultRow.get(6).getValue().toString()) : null;
+
+                this.checkedCounter = tableResultRow.get(14).getValue() != null ?
+                        Integer.parseInt(tableResultRow.get(14).getValue().toString()) : null;
+
+                this.matched = tableResultRow.get(13).getValue() != null ?
+                        Boolean.parseBoolean(tableResultRow.get(13).getValue().toString()) : null;
+
+                this.register = null; // register value is populated from sales matching
+            }
+        }
     }
 
     public String getTagId() {
@@ -161,12 +199,10 @@ public class Event {
     @Override
     public String toString() {
         return "Event{" +
-                "util=" + util +
-                ", tagId='" + tagId + '\'' +
+                "tagId='" + tagId + '\'' +
                 ", receiverId='" + receiverId + '\'' +
                 ", storeNumber='" + storeNumber + '\'' +
                 ", eventTime=" + eventTime +
-                ", signal=" + signal +
                 ", location='" + location + '\'' +
                 ", exitReader=" + exitReader +
                 ", upc='" + upc + '\'' +
@@ -178,27 +214,12 @@ public class Event {
                 '}';
     }
 
-    public Object serialize(String json) {
-        return util.serialize(json, this.getClass());
-    }
-
-    /**
-     * Returns JSON formatted Event object.
-     *
-     * @return String - JSON
-     */
-    public String json() {
-        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        try {
-            return ow.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            LOGGER.error(e.getMessage());
-        }
-        return null;
-    }
-
     /**
      * Generates a unique identifier for the event entity.
+     *
+     * Low priority - For integrity purposes, this will need check in DAO to assert UUID is not already used in the
+     * highly unlikely event this duplicates a UUID.
+     *
      * Format: #@###@-####-#@##-##@@-@@#@##@##
      *  # = Number
      *  @ = Lowercase alpha
@@ -238,11 +259,15 @@ public class Event {
     /**
      * Generates an entity for GCP Datastore or BigQuery event Kind
      *
-     * @return Entity - Datastore/BigQuery NoSQL Database Entry/Row - Kind/Entity relationship
-     * (similar to Collection/Document)
+     * @return Entity - Datastore/BigQuery NoSQL Database Entry/Row -
+     *
+     * Kind/Entity relationship
+     * (comparable to MongoDB/Firestore Collection/Document relationship)
      */
-    public Entity entity() {
-        Entity eventEntity = new Entity("event", generateUUID());
+    public Entity toEntity() {
+
+        //NamespaceManager.set(DATASTORE_NAMESPACE);
+        Entity eventEntity = new Entity(DATASTORE_EVENT_KIND, generateUUID());
 
         eventEntity.setProperty("curr_ts", new Date());
         eventEntity.setProperty("reader_id", this.getReceiverId());

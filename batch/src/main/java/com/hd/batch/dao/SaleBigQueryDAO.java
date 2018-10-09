@@ -4,6 +4,7 @@ package com.hd.batch.dao;
 import com.google.cloud.bigquery.FieldValue;
 import com.google.cloud.bigquery.TableResult;
 import com.hd.batch.constants.SaleServiceQueryConstants;
+import com.hd.batch.to.Sale;
 import com.hd.batch.util.BigQueryUtilities;
 import com.hd.batch.util.LoggerClass;
 import org.slf4j.Logger;
@@ -28,30 +29,31 @@ public class SaleBigQueryDAO extends BigQueryDAO {
         super(bigQueryUtilities);
     }
 
-    public Map<String, Object> getMatchingSales(String storeNumber, String startTime,
-                                                String endTime, String upc) throws Exception {
+    public List<Sale> getMatchingSales(String storeNumber, Map<String, String> timeWindow, List<String> upcList) throws Exception {
 
-        LOGGER.info(String.format("Query sales for store: %s start time: %s end time: %s upd: %s", storeNumber, startTime, endTime, upc));
+        LOGGER.info(String.format("Query sales for store: %s start time: %s end time: %s upd: %s",
+                storeNumber, timeWindow.get("start"), timeWindow.get("end"), upcList.toString()));
+
+        String upcListString = upcList.toString().replace("[","").replace("]","");
+
         HashMap<String, Object> matchedData = new HashMap<>();
 
         String queryString = SaleServiceQueryConstants.SELECT_BQ_SALES.replace("@storeNumber", storeNumber)
-                .replace("@startTime", startTime)
-                .replace("@endTime", endTime)
-                .replace("@upc", upc);
+                .replace("@startTime", timeWindow.get("start"))
+                .replace("@endTime", timeWindow.get("end"))
+                .replace("@upc", upcListString);
 
         TableResult result = bigQueryUtilities.runNamed(queryString);
-
+        //todo return list of sales
         if (result.getTotalRows() > 0) {
             LOGGER.info("Found a sale for tag");
 
             for (List<FieldValue> property : result.iterateAll()) {
-
-                if (property.get(0).getValue() != null) {
-                    matchedData.put("register", property.get(8).getValue().toString());
-
-                }
+                matchedData.put("register", property.get(8).getValue() != null ?
+                        String.valueOf(property.get(8).getValue()) : null);
             }
         }
+
         return matchedData;
     }
 

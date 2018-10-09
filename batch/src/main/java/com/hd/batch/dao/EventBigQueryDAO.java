@@ -19,19 +19,32 @@ public class EventBigQueryDAO extends BigQueryDAO {
         super(bigQueryUtilities);
     }
 
-    public TableResult getRFIDEvents(){
+    /**
+     * returns list of event entities from BigQuery
+     *
+     * @return TableResult result - List of event entities
+     */
+    public TableResult getEvents(){
 
         TableResult result = null;
 
         try {
-            result = bigQueryUtilities.runNamed(EventServiceQueryConstants.SELECT_BQ_RFID_EVENTS_BY_CHECK_COUNT_AND_EXIT_FLAG);
+            result = bigQueryUtilities.runNamed(
+                    EventServiceQueryConstants.SELECT_BQ_RFID_EVENTS_BY_CHECK_COUNT_AND_EXIT_FLAG);
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }
         return result;
     }
 
-    public void updateRFIDEvent(Entity event) throws Exception {
+    /**
+     * updates event entity in BigQuery
+     *
+     * @param event - Event object
+     *
+     * @throws Exception
+     */
+    public void updateEvent(Entity event) throws Exception {
         LOGGER.info(String.format("Writing event to bigquery.  Tagid:   %s ", (String) event.getProperty("tag_id")));
 
         String queryString = EventServiceQueryConstants.UPDATE_BQ_RFID_EVENT_BY_TAG_ID
@@ -44,13 +57,14 @@ public class EventBigQueryDAO extends BigQueryDAO {
     }
 
     /**
-     * write error event to big query
+     * Writes error event to BigQuery
      *
-     * @param error error which occurred
-     * @param event event entity to be written
+     * @param error - error which occurred
+     * @param event - event entity to be written
+     *
      * @throws Exception on error
      */
-    public void writeRFIDError(String error, Event event) throws Exception {
+    public void writeError(String error, Event event) throws Exception {
 
         String queryString = EventServiceQueryConstants.INSERT_BQ_RFID_ERROR.replace("@currTime",
                 ISODateTimeFormat.dateTime().print(new DateTime(DateTimeZone.UTC)))
@@ -61,6 +75,15 @@ public class EventBigQueryDAO extends BigQueryDAO {
         bigQueryUtilities.runNamed(queryString);
     }
 
+    /**
+     * Updates an entity by converting the RFID tagIds from Hex to ASCII and retrieves result of entry updating.
+     *
+     * At the present time, this is necessary as tags presented during the POC phase are both of type HEX and ASCII
+     * due to some being pre-encoded by Zebra. Todo: Update after clarification has been given as to whether we will
+     * continue encoding tags or discontinue encoding.
+     *
+     * @return BigQuery TableResult result - List of event entities
+     */
     public TableResult updateBigQueryEntityWithHexToASCII(){
 
         TableResult result = null;

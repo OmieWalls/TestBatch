@@ -1,5 +1,7 @@
 package com.hd.batch.to;
 
+import com.google.cloud.bigquery.FieldValueList;
+
 import java.util.Objects;
 
 public class Sale {
@@ -38,6 +40,18 @@ public class Sale {
         this.posTransTypeCode = posTransTypeCode;
         this.posTransId = posTransId;
         this.registerNumber = registerNumber;
+    }
+
+    public Sale(FieldValueList fieldValueList) {
+        this.storeNumber = null;
+        this.salesTsLocal = null;
+        this.upcCode = null;
+        this.skuNumber = null;
+        this.unitSales = null;
+        this.currRetailAmount = null;
+        this.posTransTypeCode = null;
+        this.posTransId = null;
+        this.registerNumber = null;
     }
 
 
