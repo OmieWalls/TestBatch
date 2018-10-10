@@ -1,4 +1,4 @@
-package com.hd.batch.processor.reader;
+package com.hd.batch.step.reader;
 
 import com.google.cloud.bigquery.FieldValue;
 import com.google.cloud.bigquery.TableResult;
@@ -6,7 +6,6 @@ import com.hd.batch.dao.EventBigQueryDAO;
 import com.hd.batch.to.Event;
 import com.hd.batch.util.LoggerClass;
 import com.hd.batch.util.NewestComparator;
-import com.hd.batch.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
@@ -31,6 +30,7 @@ public class EventReader implements ItemReader<List<Event>> {
 
     private void initialize() {
 
+        bigQueryDAO.updateBigQueryEntityWithHexToASCII();
         TableResult eventTableResult = bigQueryDAO.getEvents();
         events = mapEventsByStoreNumber(eventTableResult);
         nextStoreIndex = 0;
@@ -65,7 +65,6 @@ public class EventReader implements ItemReader<List<Event>> {
 
         if (nextStoreIndex < events.keySet().size()) {
 
-            //TODO: Log reading...
 
             Set storeNumber = Arrays.asList(events.keySet()).get(nextStoreIndex);
             nextEvents = events.get(storeNumber);
@@ -73,6 +72,8 @@ public class EventReader implements ItemReader<List<Event>> {
             nextEvents.sort(new NewestComparator()); // sort by eventTime
 
             nextStoreIndex++;
+
+            LOGGER.trace("Starting EventReader #" + nextStoreIndex + " for store number " + storeNumber);
         }
 
         return nextEvents;

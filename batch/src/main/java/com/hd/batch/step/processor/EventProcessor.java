@@ -1,5 +1,6 @@
-package com.hd.batch.processor.processor;
+package com.hd.batch.step.processor;
 
+import com.google.appengine.api.datastore.Entity;
 import com.hd.batch.dao.SaleBigQueryDAO;
 import com.hd.batch.to.Event;
 import com.hd.batch.to.Sale;
@@ -17,9 +18,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ComponentScan
-public class EventProcessor implements ItemProcessor<List<Event>, List<Event>> {
+public class EventProcessor implements ItemProcessor<List<Event>, List<Entity>> {
 
     @Autowired
     public SaleBigQueryDAO bigQueryDAO;
@@ -30,7 +32,7 @@ public class EventProcessor implements ItemProcessor<List<Event>, List<Event>> {
 
 
     @Override
-    public List<Event> process(List<Event> events) throws Exception {
+    public List<Entity> process(List<Event> events) throws Exception {
 
         // get the time window for the entire list of events for the store
         Map<String, String> timeWindow = getSalesTimeWindowFromEventList(events);
@@ -50,8 +52,32 @@ public class EventProcessor implements ItemProcessor<List<Event>, List<Event>> {
         return validateEvents(events, sales);
     }
 
-    private List<Event> validateEvents(List<Event> events, List<Sale> sales) {
-        return null; //TODO: Perform validation...
+    private List<Entity> validateEvents(List<Event> events, List<Sale> sales) {
+        List<Entity> entities = new ArrayList<>();
+
+        for (Event event : events) {
+
+            if (event.getExitReader()) {
+
+                List<Sale> salesMatchList = sales.stream()
+                        .filter(sale -> event.getUpc().equalsIgnoreCase(sale.getUpcCode()))
+                        .filter(sale -> event.getEventTime().minusMinutes(20).getMillis() < sale.getSalesTsLocal().getMillis())
+                        .filter(sale -> event.getEventTime().plusMinutes(10).getMillis() > sale.getSalesTsLocal().getMillis())
+                        .filter(sale -> sale.getRegisterNumber() != null)
+                        .collect(Collectors.toList());
+                event.setMatched(salesMatchList.size() != 0);
+
+            } else {
+                event.setMatched(false);
+            }
+
+            event.setCheckedCounter(event.getCheckedCounter()+1);
+
+            entities.add(event.toEntity());
+        }
+        //todo: Indicate false positives eventually... We should flag them as UNDETERMINED (Other flags are THEFT, DISMISSED, and NEW).
+
+        return entities;
     }
 
     private Map<String, String> getSalesTimeWindowFromEventList(List<Event> events) {

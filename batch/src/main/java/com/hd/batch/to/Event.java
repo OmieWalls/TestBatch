@@ -7,7 +7,6 @@ import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import javax.naming.Name;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -34,8 +33,7 @@ public class Event {
     private String register;
 
     public Event(String tagId, String receiverId, String storeNumber, DateTime eventTime, String location,
-                 Boolean exitReader, String upc, String productName, Double currRetailAmt, int checkedCounter, Boolean matched,
-                 String register) {
+                 Boolean exitReader, String upc, String productName, Double currRetailAmt, int checkedCounter, Boolean matched) {
         this.tagId = tagId;
         this.receiverId = receiverId;
         this.storeNumber = storeNumber;
@@ -47,7 +45,6 @@ public class Event {
         this.currRetailAmt = currRetailAmt;
         this.checkedCounter = checkedCounter;
         this.matched = matched;
-        this.register = register;
     }
 
     /**
@@ -94,8 +91,6 @@ public class Event {
 
                 this.matched = tableResultRow.get(13).getValue() != null ?
                         Boolean.parseBoolean(tableResultRow.get(13).getValue().toString()) : null;
-
-                this.register = null; // register value is populated from sales matching
             }
         }
     }
@@ -172,14 +167,6 @@ public class Event {
         this.currRetailAmt = currRetailAmt;
     }
 
-    public String getRegister() {
-        return register;
-    }
-
-    public void setRegister(String register) {
-        this.register = register;
-    }
-
     public int getCheckedCounter() {
         return checkedCounter;
     }
@@ -209,8 +196,7 @@ public class Event {
                 ", productName='" + productName + '\'' +
                 ", currRetailAmt=" + currRetailAmt +
                 ", checkedCounter=" + checkedCounter +
-                ", matched=" + matched +
-                ", register='" + register + '\'' +
+                ", matched=" + matched + '\'' +
                 '}';
     }
 
@@ -251,6 +237,7 @@ public class Event {
                     index = (int) (rnd.nextFloat() * saltNumericChars.length());
                     salt.append(saltNumericChars.charAt(index));
                 }
+                saltLength++;
 
             }
             return salt.toString();
@@ -266,7 +253,7 @@ public class Event {
      */
     public Entity toEntity() {
 
-        //NamespaceManager.set(DATASTORE_NAMESPACE);
+//        NamespaceManager.set(DATASTORE_NAMESPACE);
         Entity eventEntity = new Entity(DATASTORE_EVENT_KIND, generateUUID());
 
         eventEntity.setProperty("curr_ts", new Date());
@@ -284,12 +271,6 @@ public class Event {
         eventEntity.setProperty("video_url", "");
         eventEntity.setProperty("matched", this.getMatched());
         eventEntity.setProperty("checkedCounter", this.getCheckedCounter());
-
-        if (this.getRegister() != null && !this.getRegister().isEmpty()) {
-            eventEntity.setProperty("register", this.getRegister());
-        } else {
-            eventEntity.setProperty("register", "");
-        }
 
         return eventEntity;
     }

@@ -1,22 +1,20 @@
 package com.hd.batch.dao;
 
-import com.google.appengine.api.datastore.Entity;
-import com.google.cloud.bigquery.TableResult;
-import com.hd.batch.constants.EventServiceQueryConstants;
 import com.hd.batch.to.Event;
-import com.hd.batch.util.BigQueryUtilities;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import com.google.cloud.bigquery.TableResult;
 import org.joda.time.format.ISODateTimeFormat;
 import org.springframework.stereotype.Component;
+import com.google.appengine.api.datastore.Entity;
+import com.hd.batch.constants.EventServiceQueryConstants;
 
 
 @Component
 public class EventBigQueryDAO extends BigQueryDAO {
 
 
-    public EventBigQueryDAO(BigQueryUtilities bigQueryUtilities) {
-        super(bigQueryUtilities);
+    public EventBigQueryDAO() {
     }
 
     /**
@@ -29,7 +27,7 @@ public class EventBigQueryDAO extends BigQueryDAO {
         TableResult result = null;
 
         try {
-            result = bigQueryUtilities.runNamed(
+            result = runNamed(
                     EventServiceQueryConstants.SELECT_BQ_RFID_EVENTS_BY_CHECK_COUNT_AND_EXIT_FLAG);
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
@@ -44,16 +42,22 @@ public class EventBigQueryDAO extends BigQueryDAO {
      *
      * @throws Exception
      */
-    public void updateEvent(Entity event) throws Exception {
+    public boolean updateEvent(Entity event) {
         LOGGER.info(String.format("Writing event to bigquery.  Tagid:   %s ", (String) event.getProperty("tag_id")));
 
-        String queryString = EventServiceQueryConstants.UPDATE_BQ_RFID_EVENT_BY_TAG_ID
+        String queryString = EventServiceQueryConstants.UPDATE_BQ_RFID_EVENT_BY_TAG_ID // A few scenarios will break this... tbd
                 .replace("@matched", Boolean.toString((Boolean) event.getProperty("matched")))
                 .replace("@check_count", Integer.toString((Integer)event.getProperty("checkedCounter")))
                 .replace("@tag_id", (String) event.getProperty("tag_id"));
 
         // Instantiates a client
-        bigQueryUtilities.runNamed(queryString);
+        try {
+            runNamed(queryString);
+            return true;
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage());
+            return false;
+        }
     }
 
     /**
@@ -72,7 +76,7 @@ public class EventBigQueryDAO extends BigQueryDAO {
                 .replace("@event", event.toString());
 
         // Instantiates a client
-        bigQueryUtilities.runNamed(queryString);
+        runNamed(queryString);
     }
 
     /**
@@ -89,7 +93,7 @@ public class EventBigQueryDAO extends BigQueryDAO {
         TableResult result = null;
 
         try {
-            result = bigQueryUtilities.runNamed(EventServiceQueryConstants.UPDATE_BQ_CONVERT_HEX_TO_ASCII);
+            result = runNamed(EventServiceQueryConstants.UPDATE_BQ_CONVERT_HEX_TO_ASCII);
         } catch (Exception e) {
             LOGGER.error(e.getMessage());
         }

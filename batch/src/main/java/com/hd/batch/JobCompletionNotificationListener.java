@@ -14,13 +14,22 @@ public class JobCompletionNotificationListener extends JobExecutionListenerSuppo
     private static final Logger log = LoggerFactory.getLogger(JobCompletionNotificationListener.class);
 
     @Override
+    public void beforeJob(JobExecution jobExecution) {
+        log.info("JOB CREATED!");
+    }
+
+
+    @Override
     public void afterJob(JobExecution jobExecution) {
         if (jobExecution.getStatus() == BatchStatus.COMPLETED) {
-            log.info("!!! JOB FINISHED! Time to verify the results: ");
+            log.info("JOB COMPLETED! Verify results: ");
 
-            // Todo: Log records if necessary or come up with some meaningful signal to the end of the job.
         } else if (jobExecution.getStatus() == BatchStatus.FAILED){
-            //job failure
+            log.info("JOB FAILED! Results: " + "Start Time - " +
+                    jobExecution.getStartTime() + "End Time - " +
+                    jobExecution.getEndTime() + "Configuration Name - " +
+                    jobExecution.getJobConfigurationName() + "Exit Status - " +
+                    jobExecution.getExitStatus());
         }
     }
 }

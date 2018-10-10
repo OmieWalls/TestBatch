@@ -1,13 +1,16 @@
 package com.hd.batch.to;
 
 import com.google.cloud.bigquery.FieldValueList;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 
 import java.util.Objects;
 
 public class Sale {
 
     private String storeNumber;
-    private String salesTsLocal;
+    private DateTime salesTsLocal;
     private String upcCode;
     private String skuNumber;
     private String unitSales;
@@ -28,7 +31,7 @@ public class Sale {
         this.registerNumber = null;
     }
 
-    public Sale(String storeNumber, String salesTsLocal, String upcCode, String skuNumber,
+    public Sale(String storeNumber, DateTime salesTsLocal, String upcCode, String skuNumber,
                  String unitSales, String currRetailAmount, String posTransTypeCode,
                  String posTransId, String registerNumber) {
         this.storeNumber = storeNumber;
@@ -42,18 +45,38 @@ public class Sale {
         this.registerNumber = registerNumber;
     }
 
-    public Sale(FieldValueList fieldValueList) {
-        this.storeNumber = null;
-        this.salesTsLocal = null;
-        this.upcCode = null;
-        this.skuNumber = null;
-        this.unitSales = null;
-        this.currRetailAmount = null;
-        this.posTransTypeCode = null;
-        this.posTransId = null;
-        this.registerNumber = null;
-    }
+    public Sale(FieldValueList tableResultRow) {
 
+        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss z");
+
+
+        this.storeNumber = tableResultRow.get(0).getValue() != null ?
+                tableResultRow.get(0).getValue().toString() : null;
+
+        this.salesTsLocal = tableResultRow.get(1).getValue() != null ?
+                formatter.parseDateTime(tableResultRow.get(1).getValue().toString()) : null;
+
+        this.upcCode = tableResultRow.get(2).getValue() != null ?
+                tableResultRow.get(2).getValue().toString() : null;
+
+        this.skuNumber = tableResultRow.get(3).getValue() != null ?
+                tableResultRow.get(3).getValue().toString() : null;
+
+        this.unitSales = tableResultRow.get(4).getValue() != null ?
+                tableResultRow.get(4).getValue().toString() : null;
+
+        this.currRetailAmount = tableResultRow.get(5).getValue() != null ?
+                tableResultRow.get(5).getValue().toString() : null;
+
+        this.posTransTypeCode = tableResultRow.get(6).getValue() != null ?
+                tableResultRow.get(6).getValue().toString() : null;
+
+        this.posTransId = tableResultRow.get(7).getValue() != null ?
+                tableResultRow.get(7).getValue().toString() : null;
+
+        this.registerNumber = tableResultRow.get(8).getValue() != null ?
+                tableResultRow.get(8).getValue().toString() : null;
+    }
 
     public String getStoreNumber() {
         return storeNumber;
@@ -63,11 +86,11 @@ public class Sale {
         this.storeNumber = storeNumber;
     }
 
-    public String getSalesTsLocal() {
+    public DateTime getSalesTsLocal() {
         return salesTsLocal;
     }
 
-    public void setSalesTsLocal(String salesTsLocal) {
+    public void setSalesTsLocal(DateTime salesTsLocal) {
         this.salesTsLocal = salesTsLocal;
     }
 

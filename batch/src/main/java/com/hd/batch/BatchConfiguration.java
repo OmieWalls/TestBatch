@@ -1,8 +1,9 @@
 package com.hd.batch;
 
 import com.google.appengine.api.datastore.Entity;
-import com.hd.batch.processor.processor.EventProcessor;
-import com.hd.batch.processor.reader.EventReader;
+import com.hd.batch.step.processor.EventProcessor;
+import com.hd.batch.step.reader.EventReader;
+import com.hd.batch.step.writer.EventWriter;
 import com.hd.batch.to.Event;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -15,9 +16,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Configuration
 @EnableBatchProcessing
@@ -35,14 +34,14 @@ public class BatchConfiguration {
     public ItemProcessor<List<Event>, List<Entity>> eventProcessor() { return new EventProcessor(); }
 
     public ItemWriter<List<Entity>> eventWriter() {
-        return null;
+        return new EventWriter();
     }
 
 
     @Bean
-    public Job eventJob() throws Exception {
+    public Job eventJob(JobCompletionNotificationListener listener) throws Exception {
         return this.job.get("eventJob")
-                .start(eventLoad())
+                .start(eventLoad(listener))
                 .build();
     }
 
