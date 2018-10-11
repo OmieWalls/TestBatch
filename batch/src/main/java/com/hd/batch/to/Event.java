@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Random;
 
 import static com.hd.batch.constants.QueryConstants.DATASTORE_EVENT_KIND;
-import static com.hd.batch.constants.QueryConstants.DATASTORE_NAMESPACE;
 
 /**
  * Convenience class for RFID readers
@@ -252,7 +251,6 @@ public class Event {
      */
     public Entity toEntity() {
 
-//        NamespaceManager.set(DATASTORE_NAMESPACE);
         Entity eventEntity = new Entity(DATASTORE_EVENT_KIND, generateUUID());
 
         eventEntity.setProperty("curr_ts", new Date());
