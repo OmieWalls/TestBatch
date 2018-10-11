@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 
 @ComponentScan
-public class EventProcessor implements ItemProcessor<List<Event>, List<Event>> {
+public class EventProcessor implements ItemProcessor<List<Event>, List<Entity>> {
 
     @Autowired
     public SaleBigQueryDAO bigQueryDAO;
@@ -37,7 +37,7 @@ public class EventProcessor implements ItemProcessor<List<Event>, List<Event>> {
 
 
     @Override
-    public List<Event> process(List<Event> events) throws Exception {
+    public List<Entity> process(List<Event> events) throws Exception {
 
         // get the time window for the entire list of events for the store
         Map<String, String> timeWindow = getSalesTimeWindowFromEventList(events);
@@ -53,12 +53,24 @@ public class EventProcessor implements ItemProcessor<List<Event>, List<Event>> {
 
         List<Event> validatedEvents = validateEvents(events, sales);
 
+        // get events that are distinct by tagId in order to update multiple events based upon tagId and reduce amount of data calls
         validatedEvents.stream().filter(Util.distinctByKey(Event::getTagId));
 
-        return validatedEvents;
+        // map events to entities
+        return validatedEvents.stream().map(Event::toEntity).collect(Collectors.toList());
 
     }
 
+    /**
+     * Validates list of events at individual level to the corresponding sales data from retrieved list of transactions.
+     * Updates each event with flag indicating whether it has been matched against the POS data and updates the checked
+     * counter which indicates the number of times this data has ran through the validation job.
+     *
+     * @param events
+     * @param sales
+     *
+     * @return validatedEvents - List<Event> List of events that have been matched or unmatched
+     */
     private List<Event> validateEvents(List<Event> events, List<Sale> sales) {
         List<Event> validatedEvents = new ArrayList<>();
 
@@ -75,10 +87,17 @@ public class EventProcessor implements ItemProcessor<List<Event>, List<Event>> {
 
             event.setCheckedCounter(event.getCheckedCounter()+1);
         }
-        //todo: Indicate false positives eventually... We should flag them as UNDETERMINED (Other flags are THEFT, DISMISSED, and NEW).
+        //todo: Indicate false negatives eventually... We should flag them as UNDETERMINED (Other flags are THEFT, DISMISSED, and NEW).
         return validatedEvents;
     }
 
+    /**
+     * Gets sales time window for list of events from the earliest to the latest along with 20 minutes before and
+     * 10 minutes after.
+     *
+     * @param events
+     * @return
+     */
     private Map<String, String> getSalesTimeWindowFromEventList(List<Event> events) {
 
         // define time window = 20 minutes before and 10 minutes after list of events

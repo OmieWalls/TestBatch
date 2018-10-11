@@ -1,6 +1,5 @@
 package com.hd.batch.step.reader;
 
-import com.google.cloud.bigquery.FieldValue;
 import com.google.cloud.bigquery.TableResult;
 import com.hd.batch.dao.EventBigQueryDAO;
 import com.hd.batch.to.Event;
@@ -30,8 +29,10 @@ public class EventReader implements ItemReader<List<Event>> {
 
     private void initialize() {
 
-        bigQueryDAO.updateBigQueryEntityWithHexToASCII();
+        bigQueryDAO.updateBigQueryEntityConvertTagHexToASCII();
+
         TableResult eventTableResult = bigQueryDAO.getEvents();
+
         events = mapEventsByStoreNumber(eventTableResult);
         nextStoreIndex = 0;
     }
@@ -69,6 +70,7 @@ public class EventReader implements ItemReader<List<Event>> {
             Set storeNumber = Arrays.asList(events.keySet()).get(nextStoreIndex);
             nextEvents = events.get(storeNumber);
 
+            // Takes events that are sorted by timestamp and gets the effective time window for sales
             nextEvents.sort(new NewestComparator()); // sort by eventTime
 
             nextStoreIndex++;

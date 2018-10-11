@@ -50,16 +50,16 @@ class BigQueryDAOSpec extends Specification {
     boolean expectNoEntities() {
         DatastoreService ds = DatastoreServiceFactory.getDatastoreService()
 
-        return 0 == ds.prepare(new Query("yam")).countEntities(withLimit(10))
+        return 0 == ds.prepare(new Query("kind")).countEntities(withLimit(10))
     }
 
     boolean expectInserts() {
         DatastoreService ds = DatastoreServiceFactory.getDatastoreService()
 
-        ds.put(new Entity("yam"))
-        ds.put(new Entity("yam"))
+        ds.put(new Entity("kind"))
+        ds.put(new Entity("kind"))
 
-        return 2 == ds.prepare(new Query("yam")).countEntities(withLimit(10))
+        return 2 == ds.prepare(new Query("kind")).countEntities(withLimit(10))
     }
 
     def "events retrieved after calling getEvents()"() {
@@ -76,10 +76,7 @@ class BigQueryDAOSpec extends Specification {
     def "entity updated after calling updateEvent()"() {
         given:
 
-        Event event = new Event("PILOT966401", null, "345",
-                DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime("2018-10-09 11:26:04"),
-                null, null, null, null, null, 0,
-                false)
+        Event event = new Event() //todo: insert event
 
         event.setExitReader(true)
         event.setUpc('3082303038')

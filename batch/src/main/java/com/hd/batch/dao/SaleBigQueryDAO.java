@@ -17,8 +17,6 @@ import java.util.Map;
 @Component
 public class SaleBigQueryDAO extends BigQueryDAO {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoggerClass.class);
-
     public SaleBigQueryDAO( ) {
     }
 
@@ -41,9 +39,7 @@ public class SaleBigQueryDAO extends BigQueryDAO {
         if (result.getTotalRows() > 0) {
             LOGGER.info("Found a sale for tag");
 
-            for(FieldValueList row : result.iterateAll()) {
-                sales.add(new Sale(row));
-            }
+            result.iterateAll().forEach(row -> sales.add(new Sale(row)));
         }
 
         return sales;

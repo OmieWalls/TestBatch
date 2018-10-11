@@ -13,9 +13,7 @@ import com.hd.batch.constants.EventServiceQueryConstants;
 @Component
 public class EventBigQueryDAO extends BigQueryDAO {
 
-
-    public EventBigQueryDAO() {
-    }
+    public EventBigQueryDAO() { }
 
     /**
      * returns list of event entities from BigQuery
@@ -88,7 +86,7 @@ public class EventBigQueryDAO extends BigQueryDAO {
      *
      * @return BigQuery TableResult result - List of event entities
      */
-    public TableResult updateBigQueryEntityWithHexToASCII(){
+    public TableResult updateBigQueryEntityConvertTagHexToASCII(){
 
         TableResult result = null;
 

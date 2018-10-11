@@ -1,6 +1,5 @@
 package com.hd.batch.to;
 
-import com.google.appengine.api.NamespaceManager;
 import com.google.appengine.api.datastore.Entity;
 import com.google.cloud.bigquery.FieldValue;
 import org.joda.time.DateTime;
@@ -9,9 +8,9 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
-import static com.hd.batch.constants.QueryConstants.DATASTORE_EVENT_KIND;
+import static com.hd.batch.constants.QueryConstants.EVENT;
+
 
 /**
  * Convenience class for RFID readers
@@ -29,9 +28,11 @@ public class Event {
     private Double currRetailAmt;
     private int checkedCounter;
     private Boolean matched;
+    private String uuid;
 
-    public Event(String tagId, String receiverId, String storeNumber, DateTime eventTime, String location,
+    public Event(String uuid, String tagId, String receiverId, String storeNumber, DateTime eventTime, String location,
                  Boolean exitReader, String upc, String productName, Double currRetailAmt, int checkedCounter, Boolean matched) {
+        this.uuid = uuid;
         this.tagId = tagId;
         this.receiverId = receiverId;
         this.storeNumber = storeNumber;
@@ -59,6 +60,9 @@ public class Event {
 
                 this.tagId = tableResultRow.get(1).getValue() != null ?
                         tableResultRow.get(1).getValue().toString() : null;
+
+                this.uuid = tableResultRow.get(15).getValue() != null ?
+                        tableResultRow.get(15).getValue().toString() : null; // name_id property
 
                 this.receiverId = tableResultRow.get(2).getValue() != null ?
                         tableResultRow.get(2).getValue().toString() : null;
@@ -91,6 +95,10 @@ public class Event {
                         Boolean.parseBoolean(tableResultRow.get(13).getValue().toString()) : null;
             }
         }
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 
     public String getTagId() {
@@ -186,6 +194,7 @@ public class Event {
         return "Event{" +
                 "tagId='" + tagId + '\'' +
                 ", receiverId='" + receiverId + '\'' +
+                ", uuid='" + uuid + '\'' +
                 ", storeNumber='" + storeNumber + '\'' +
                 ", eventTime=" + eventTime +
                 ", location='" + location + '\'' +
@@ -199,49 +208,6 @@ public class Event {
     }
 
     /**
-     * Generates a unique identifier for the event entity.
-     *
-     * Low priority - For integrity purposes, this will need check in DAO to assert UUID is not already used in the
-     * highly unlikely event this duplicates a UUID.
-     *
-     * Format: #@###@-####-#@##-##@@-@@#@##@##
-     *  # = Number
-     *  @ = Lowercase alpha
-     *  - = Dash
-     *
-     * @return String - UUID character sequence
-     */
-    private String generateUUID() {
-        String saltAlphaChars = "abcdefghijklmnopqrstuvwxyz";
-        String saltNumericChars = "1234567890";
-        StringBuilder salt = new StringBuilder();
-        Random rnd = new Random();
-        int saltLength = salt.length();
-        int index;
-            while (saltLength < 32) { // length of the random string.
-
-                if (saltLength == 6  || saltLength == 11 ||
-                    saltLength == 16 || saltLength == 21) {
-
-                    salt.append("-"); // append a dash at key points in the string
-                } else if (saltLength == 1  || saltLength == 5  ||
-                           saltLength == 13 || saltLength == 19 ||
-                           saltLength == 20 || saltLength == 22 ||
-                           saltLength == 23 || saltLength == 25 ||
-                           saltLength == 28) {
-                    index = (int) (rnd.nextFloat() * saltAlphaChars.length());
-                    salt.append(saltAlphaChars.charAt(index)); // append a letter at certain indexes
-                } else { // append a number in all other indexes
-                    index = (int) (rnd.nextFloat() * saltNumericChars.length());
-                    salt.append(saltNumericChars.charAt(index));
-                }
-                saltLength++;
-
-            }
-            return salt.toString();
-    }
-
-    /**
      * Generates an entity for GCP Datastore or BigQuery event Kind
      *
      * @return Entity - Datastore/BigQuery NoSQL Database Entry/Row -
@@ -251,12 +217,13 @@ public class Event {
      */
     public Entity toEntity() {
 
-        Entity eventEntity = new Entity(DATASTORE_EVENT_KIND, generateUUID());
+        Entity eventEntity = new Entity(EVENT, this.getUuid());
 
+        eventEntity.setProperty("name_id", this.getUuid());
         eventEntity.setProperty("curr_ts", new Date());
         eventEntity.setProperty("reader_id", this.getReceiverId());
         eventEntity.setProperty("event_status", "new");
-        eventEntity.setProperty("event_timestamp", new Date(this.getEventTime().getMillis()));
+        eventEntity.setProperty("event_timestamp", String.valueOf(this.getEventTime()));
         eventEntity.setProperty("exit_event", this.getExitReader());
         eventEntity.setProperty("location", this.getLocation());
         eventEntity.setProperty("product_image_url", "");

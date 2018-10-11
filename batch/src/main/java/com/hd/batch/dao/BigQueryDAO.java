@@ -12,7 +12,7 @@ import java.util.UUID;
 public class BigQueryDAO {
 
 
-    protected static final Logger LOGGER = LoggerFactory.getLogger(LoggerClass.class);
+    protected Logger LOGGER = LoggerFactory.getLogger(LoggerClass.class);
 
     public BigQueryDAO () {
 

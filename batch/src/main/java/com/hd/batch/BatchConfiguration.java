@@ -29,11 +29,11 @@ public class BatchConfiguration {
     @Autowired
     public StepBuilderFactory steps;
 
-    public ItemReader<List<Event>> eventReader() throws Exception { return new EventReader(); }
+    public ItemReader<List<Event>> eventReader() { return new EventReader(); }
 
-    public ItemProcessor<List<Event>, List<Event>> eventProcessor() { return new EventProcessor(); }
+    public ItemProcessor<List<Event>, List<Entity>> eventProcessor() { return new EventProcessor(); }
 
-    public ItemWriter<List<Event>> eventWriter() {
+    public ItemWriter<List<Entity>> eventWriter() {
         return new EventWriter();
     }
 
@@ -46,9 +46,9 @@ public class BatchConfiguration {
     }
 
     @Bean
-    public Step eventLoad(JobCompletionNotificationListener listener) throws Exception {
+    public Step eventLoad(JobCompletionNotificationListener listener) {
         return this.steps.get("eventLoad")
-                .<List<Event>, List<Event>>chunk(10)
+                .<List<Event>, List<Entity>>chunk(100)
                 .reader(eventReader())
                 .processor(eventProcessor())
                 .writer(eventWriter())
