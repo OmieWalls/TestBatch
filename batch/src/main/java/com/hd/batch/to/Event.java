@@ -30,7 +30,6 @@ public class Event {
     private Double currRetailAmt;
     private int checkedCounter;
     private Boolean matched;
-    private String register;
 
     public Event(String tagId, String receiverId, String storeNumber, DateTime eventTime, String location,
                  Boolean exitReader, String upc, String productName, Double currRetailAmt, int checkedCounter, Boolean matched) {

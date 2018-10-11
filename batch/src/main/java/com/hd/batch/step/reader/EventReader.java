@@ -40,31 +40,31 @@ public class EventReader implements ItemReader<List<Event>> {
 
         Map<String, List<Event>> eventsMap = new HashMap<>();
 
-        for (List<FieldValue> row : results.iterateAll()) {
+        results.iterateAll().forEach(row -> {
 
             String storeNumber = row.get(12).getValue() != null ?
                     row.get(12).getValue().toString() : null;
 
-            // create a new event list if list is not already created for store number and add event to list
-            if (eventsMap.get(storeNumber) == null) {
+            if (storeNumber != null) {
 
-                List<Event> newEventList = new ArrayList<>();
-                newEventList.add(new Event(row));
-                eventsMap.put(storeNumber, newEventList);
+                List<Event> storeLevelEventList = eventsMap.get(storeNumber) == null ?
+                    new ArrayList<>() : eventsMap.get(storeNumber);
 
-            } else { // add event to list that is already created
-                eventsMap.get(storeNumber).add(new Event(row));
+                storeLevelEventList.add(new Event(row));
+
+                eventsMap.put(storeNumber, storeLevelEventList);
             }
-        }
+
+        });
+
         return eventsMap;
     }
 
     @Override
-    public List<Event> read() throws Exception {
+    public List<Event> read() {
         List<Event> nextEvents = null;
 
         if (nextStoreIndex < events.keySet().size()) {
-
 
             Set storeNumber = Arrays.asList(events.keySet()).get(nextStoreIndex);
             nextEvents = events.get(storeNumber);

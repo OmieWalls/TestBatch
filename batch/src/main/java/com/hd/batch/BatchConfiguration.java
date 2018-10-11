@@ -31,9 +31,9 @@ public class BatchConfiguration {
 
     public ItemReader<List<Event>> eventReader() throws Exception { return new EventReader(); }
 
-    public ItemProcessor<List<Event>, List<Entity>> eventProcessor() { return new EventProcessor(); }
+    public ItemProcessor<List<Event>, List<Event>> eventProcessor() { return new EventProcessor(); }
 
-    public ItemWriter<List<Entity>> eventWriter() {
+    public ItemWriter<List<Event>> eventWriter() {
         return new EventWriter();
     }
 
@@ -48,7 +48,7 @@ public class BatchConfiguration {
     @Bean
     public Step eventLoad(JobCompletionNotificationListener listener) throws Exception {
         return this.steps.get("eventLoad")
-                .<List<Event>, List<Entity>>chunk(10)
+                .<List<Event>, List<Event>>chunk(10)
                 .reader(eventReader())
                 .processor(eventProcessor())
                 .writer(eventWriter())

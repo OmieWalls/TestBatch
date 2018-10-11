@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 
 @ComponentScan
-public class EventProcessor implements ItemProcessor<List<Event>, List<Entity>> {
+public class EventProcessor implements ItemProcessor<List<Event>, List<Event>> {
 
     @Autowired
     public SaleBigQueryDAO bigQueryDAO;
@@ -37,28 +37,26 @@ public class EventProcessor implements ItemProcessor<List<Event>, List<Entity>> 
 
 
     @Override
-    public List<Entity> process(List<Event> events) throws Exception {
+    public List<Event> process(List<Event> events) throws Exception {
 
         // get the time window for the entire list of events for the store
         Map<String, String> timeWindow = getSalesTimeWindowFromEventList(events);
 
         // compile list of UPCs from the given events
-        List<String> listOfUPCs = new ArrayList<>();
-
-        for (Event event : events) {
-            listOfUPCs.add(event.getUpc());
-        }
+        List<String> listOfUPCs = events.stream().map(Event::getUpc).collect(Collectors.toList());
 
         // get the store number (all events per process have the same store number)
         String storeNumber = events.get(0).getStoreNumber();
 
+        // get matching sales for the entire
         List<Sale> sales = bigQueryDAO.getMatchingSales(storeNumber, timeWindow, listOfUPCs);
 
         List<Event> validatedEvents = validateEvents(events, sales);
 
         validatedEvents.stream().filter(Util.distinctByKey(Event::getTagId));
 
-        return validatedEvents.parallelStream().map(Event::toEntity).collect(Collectors.toList());
+        return validatedEvents;
+
     }
 
     private List<Event> validateEvents(List<Event> events, List<Sale> sales) {

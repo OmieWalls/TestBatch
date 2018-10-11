@@ -22,16 +22,16 @@ public class EventDatastoreDAO {
     /**
      * write entity event to datastore
      *
-     * @param entity event entity to be written
+     * @param entities event entity to be written
      */
-    public void writeEntity(Entity entity) {
-        LOGGER.info(String.format("Writing event to datastore.  Tagid:   %s ", (String) entity.getProperty("tag_id")));
+    public void writeEntity(List<Entity> entities) {
+        LOGGER.info(String.format("Writing event to datastore.  Tagid:   %s ", entities.stream().map(entity -> (String) entity.getProperty("tag_id")).toString()));
 
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
         NamespaceManager.set(DATASTORE_NAMESPACE);
-
-        datastore.put(entity);
+        //todo: get entities where tagId = tag
+        datastore.put(entities);
 
     }
 
