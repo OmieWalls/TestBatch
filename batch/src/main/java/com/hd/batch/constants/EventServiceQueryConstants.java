@@ -4,6 +4,8 @@ import static com.hd.batch.constants.QueryConstants.BIG_QUERY_ERROR_KIND;
 import static com.hd.batch.constants.QueryConstants.BIG_QUERY_EVENT_KIND;
 import static com.hd.batch.constants.QueryConstants.BIG_QUERY_READER_KIND;
 import static com.hd.batch.constants.QueryConstants.BIG_QUERY_TAG_KIND;
+import static com.hd.batch.constants.QueryConstants.BIG_QUERY_CHECK_COUNT_THRESHOLD;
+
 
 public interface EventServiceQueryConstants {
 
@@ -28,7 +30,7 @@ public interface EventServiceQueryConstants {
             "FROM `"+ BIG_QUERY_EVENT_KIND + "` event " +
             "LEFT JOIN `" + BIG_QUERY_TAG_KIND + "` tag ON tag.tag_id = event.ascii_tag_id " +
             "LEFT JOIN `" + BIG_QUERY_READER_KIND + "` reader ON reader.reader_id = event.reader_id " +
-            "WHERE check_count IN ('0', '1') AND matched = 'false' AND exit_event = 'true'";
+            "WHERE check_count < " + BIG_QUERY_CHECK_COUNT_THRESHOLD + " AND matched = 'false' AND exit_event = 'true'";
 
 
     //write event to BQ for analytics purposes

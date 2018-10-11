@@ -13,7 +13,7 @@ public class QueryConstants {
     public static final String READER = System.getenv("READER") != null ? System.getenv("READER") : "reader";
     public static final String ERROR = System.getenv("ERROR") != null ? System.getenv("ERROR") : "error";
     public static final String SALES = System.getenv("SALES") != null ? System.getenv("SALES") : "salse";
-    public static final String DATASTORE_EVENT_KIND = System.getenv("DATASTORE_EVENT_KIND") != null ? System.getenv("") : "event";
+    public static final String DATASTORE_EVENT_KIND = System.getenv("DATASTORE_EVENT_KIND") != null ? System.getenv("DATASTORE_EVENT_KIND") : "event";
 
     // Full BigQuery & Datastore Kind Names
     public static final String BIG_QUERY_EVENT_KIND = BIG_QUERY_PROJECT_ENV + "." + BIG_QUERY_DATASET + "." + EVENT;
@@ -21,4 +21,5 @@ public class QueryConstants {
     public static final String BIG_QUERY_READER_KIND = BIG_QUERY_PROJECT_ENV + "." + BIG_QUERY_DATASET + "." + READER;
     public static final String BIG_QUERY_ERROR_KIND = BIG_QUERY_PROJECT_ENV + "." + BIG_QUERY_DATASET + "." + ERROR;
     public static final String BIG_QUERY_SALES_KIND = BIG_QUERY_PROJECT_ENV + "." + BIG_QUERY_DATASET + "." + SALES;
+    public static final Integer BIG_QUERY_CHECK_COUNT_THRESHOLD = 2;
 }
