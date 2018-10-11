@@ -34,7 +34,7 @@ public interface EventServiceQueryConstants {
     //write event to BQ for analytics purposes
     String UPDATE_BQ_RFID_EVENT_BY_TAG_ID =
             "UPDATE `"+ BIG_QUERY_EVENT_KIND + "` "
-                    + "SET MATCHED =@matched, check_count = @check_count "
+                    + "SET MATCHED = '@matched', check_count = '@check_count' "
                     + "WHERE tag_id = '@tag_id'";
 
     //write error to BigQuery for analytics
