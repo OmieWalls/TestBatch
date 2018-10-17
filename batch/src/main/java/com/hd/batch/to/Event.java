@@ -2,9 +2,8 @@ package com.hd.batch.to;
 
 import com.google.appengine.api.datastore.Entity;
 import com.google.cloud.bigquery.FieldValue;
+import com.hd.batch.util.Util;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.util.Date;
 import java.util.List;
@@ -18,7 +17,7 @@ import static com.hd.batch.constants.QueryConstants.EVENT;
 public class Event {
 
     private String tagId;
-    private String receiverId;
+    private String readerId;
     private String storeNumber;
     private DateTime eventTime;
     private String location;
@@ -30,13 +29,13 @@ public class Event {
     private Boolean matched;
     private String uuid;
 
-    public Event(String uuid, String tagId, String receiverId, String storeNumber, DateTime eventTime, String location,
+    public Event(String uuid, String tagId, String readerId, String storeNumber, String eventTime, String location,
                  Boolean exitReader, String upc, String productName, Double currRetailAmt, int checkedCounter, Boolean matched) {
         this.uuid = uuid;
         this.tagId = tagId;
-        this.receiverId = receiverId;
+        this.readerId = readerId;
         this.storeNumber = storeNumber;
-        this.eventTime = eventTime;
+        this.eventTime = Util.formatDateTimeFromString(eventTime);
         this.location = location;
         this.exitReader = exitReader;
         this.upc = upc;
@@ -56,22 +55,20 @@ public class Event {
         if (tableResultRow != null) {
             if (!tableResultRow.isEmpty()) {
 
-                DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss z");
-
                 this.tagId = tableResultRow.get(1).getValue() != null ?
                         tableResultRow.get(1).getValue().toString() : null;
 
                 this.uuid = tableResultRow.get(15).getValue() != null ?
                         tableResultRow.get(15).getValue().toString() : null; // name_id property
 
-                this.receiverId = tableResultRow.get(2).getValue() != null ?
+                this.readerId = tableResultRow.get(2).getValue() != null ?
                         tableResultRow.get(2).getValue().toString() : null;
 
                 this.storeNumber = tableResultRow.get(12).getValue() != null ?
                         tableResultRow.get(12).getValue().toString() : null;
 
                 this.eventTime = tableResultRow.get(4).getValue() != null ?
-                        formatter.parseDateTime(tableResultRow.get(4).getValue().toString()) : null;
+                        Util.formatDateTimeFromString(tableResultRow.get(4).getValue().toString()) : null;
 
                 this.location = tableResultRow.get(7).getValue() != null ?
                         tableResultRow.get(7).getValue().toString() : null;
@@ -125,12 +122,12 @@ public class Event {
         this.storeNumber = storeNumber;
     }
 
-    public String getReceiverId() {
-        return receiverId;
+    public String getReaderId() {
+        return readerId;
     }
 
-    public void setReceiverId(String receiverId) {
-        this.receiverId = receiverId;
+    public void setReaderId(String readerId) {
+        this.readerId = readerId;
     }
 
     public String getLocation() {
@@ -193,7 +190,7 @@ public class Event {
     public String toString() {
         return "Event{" +
                 "tagId='" + tagId + '\'' +
-                ", receiverId='" + receiverId + '\'' +
+                ", readerId='" + readerId + '\'' +
                 ", uuid='" + uuid + '\'' +
                 ", storeNumber='" + storeNumber + '\'' +
                 ", eventTime=" + eventTime +
@@ -221,7 +218,7 @@ public class Event {
 
         eventEntity.setProperty("name_id", this.getUuid());
         eventEntity.setProperty("curr_ts", new Date());
-        eventEntity.setProperty("reader_id", this.getReceiverId());
+        eventEntity.setProperty("reader_id", this.getReaderId());
         eventEntity.setProperty("event_status", "new");
         eventEntity.setProperty("event_timestamp", String.valueOf(this.getEventTime()));
         eventEntity.setProperty("exit_event", this.getExitReader());

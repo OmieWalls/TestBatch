@@ -1,9 +1,8 @@
 package com.hd.batch.to;
 
 import com.google.cloud.bigquery.FieldValueList;
+import com.hd.batch.util.Util;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.util.Objects;
 
@@ -47,14 +46,11 @@ public class Sale {
 
     public Sale(FieldValueList tableResultRow) {
 
-        DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss z");
-
-
         this.storeNumber = tableResultRow.get(0).getValue() != null ?
                 tableResultRow.get(0).getValue().toString() : null;
 
         this.salesTsLocal = tableResultRow.get(1).getValue() != null ?
-                formatter.parseDateTime(tableResultRow.get(1).getValue().toString()) : null;
+                Util.formatDateTimeFromString(tableResultRow.get(1).getValue().toString()) : null;
 
         this.upcCode = tableResultRow.get(2).getValue() != null ?
                 tableResultRow.get(2).getValue().toString() : null;

@@ -71,23 +71,32 @@ public class EventProcessor implements ItemProcessor<List<Event>, List<Entity>> 
      *
      * @return validatedEvents - List<Event> List of events that have been matched or unmatched
      */
-    private List<Event> validateEvents(List<Event> events, List<Sale> sales) {
+    public List<Event> validateEvents(List<Event> events, List<Sale> sales) {
         List<Event> validatedEvents = new ArrayList<>();
 
         for (Event event : events) {
 
             List<Sale> salesMatchList = sales.stream()
+                    // filter for matches by upc
                     .filter(sale -> event.getUpc().equalsIgnoreCase(sale.getUpcCode()))
+
+                    // match by time window
                     .filter(sale -> event.getEventTime().minusMinutes(20).getMillis() < sale.getSalesTsLocal().getMillis())
                     .filter(sale -> event.getEventTime().plusMinutes(10).getMillis() > sale.getSalesTsLocal().getMillis())
+
+                    // ensure there is a register number
                     .filter(sale -> sale.getRegisterNumber() != null)
+
+                    // store to list
                     .collect(Collectors.toList());
 
+            // determine a match for the event by the evidence of results from the criteria above
             event.setMatched(salesMatchList.size() != 0);
 
+            // update the check counter which allows us to keep track of how many times this event has gone through validation
             event.setCheckedCounter(event.getCheckedCounter()+1);
         }
-        //todo: Indicate false negatives eventually... We should flag them as UNDETERMINED (Other flags are THEFT, DISMISSED, and NEW).
+        //TODO: Indicate false negatives eventually... We should flag them as UNDETERMINED (Other flags are THEFT, DISMISSED, and NEW).
         return validatedEvents;
     }
 
@@ -98,22 +107,16 @@ public class EventProcessor implements ItemProcessor<List<Event>, List<Entity>> 
      * @param events
      * @return
      */
-    private Map<String, String> getSalesTimeWindowFromEventList(List<Event> events) {
+    public Map<String, String> getSalesTimeWindowFromEventList(List<Event> events) {
 
         // define time window = 20 minutes before and 10 minutes after list of events
         DateTime startTime = events.get(0).getEventTime().minusMinutes(20);
         DateTime endTime = events.get(events.size() - 1).getEventTime().plusMinutes(10);
 
-        // create the formatter with the "no-millis" format
-        DateTimeFormatter formatterNoMillis = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
-
-
-        String endTimeNoMillis = endTime.toString(formatterNoMillis);
-        String startTimeNoMillis = startTime.toString(formatterNoMillis);
-
         Map<String, String> timeWindowMap = new HashMap<>();
-        timeWindowMap.put("start", startTimeNoMillis);
-        timeWindowMap.put("end", endTimeNoMillis);
+
+        timeWindowMap.put("start", Util.formatStringFromDateTime(startTime));
+        timeWindowMap.put("end", Util.formatStringFromDateTime(endTime));
 
         return timeWindowMap;
     }

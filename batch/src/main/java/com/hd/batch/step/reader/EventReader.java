@@ -5,6 +5,7 @@ import com.hd.batch.dao.EventBigQueryDAO;
 import com.hd.batch.to.Event;
 import com.hd.batch.util.LoggerClass;
 import com.hd.batch.util.NewestComparator;
+import com.hd.batch.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
@@ -57,8 +58,7 @@ public class EventReader implements ItemReader<List<Event>> {
             }
 
         });
-
-        return eventsMap;
+        return Util.sortByKey(eventsMap);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class EventReader implements ItemReader<List<Event>> {
 
         if (nextStoreIndex < events.keySet().size()) {
 
-            Set storeNumber = Arrays.asList(events.keySet()).get(nextStoreIndex);
+            Set storeNumber = Collections.singletonList(events.keySet()).get(nextStoreIndex);
             nextEvents = events.get(storeNumber);
 
             // Takes events that are sorted by timestamp and gets the effective time window for sales
